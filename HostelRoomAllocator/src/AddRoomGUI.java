@@ -7,31 +7,70 @@ import java.util.*;
 public class AddRoomGUI extends JFrame {
     private JTextField roomNumField, capacityField;
     private JComboBox<String> blockBox, typeBox;
+    private JButton addBtn;
     private Map<String, Integer> blockMap = new HashMap<>();
 
     public AddRoomGUI() {
-        setTitle("Add New Room");
-        setSize(400, 340);
+        setTitle("🛏️ Add New Room");
+        setSize(470, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(6, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        // Gradient background panel
+        JPanel content = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(243, 249, 252),
+                        0, getHeight(), new Color(211, 235, 246)
+                );
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        content.setLayout(new BorderLayout());
+        add(content);
 
-        panel.add(new JLabel("Room Number:"));  roomNumField = new JTextField();     panel.add(roomNumField);
+        JLabel title = new JLabel("Add New Room", JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(14, 0, 18, 0));
+        content.add(title, BorderLayout.NORTH);
 
-        panel.add(new JLabel("Block:"));        blockBox = new JComboBox<>();        panel.add(blockBox);
+        JPanel form = new JPanel(new GridLayout(6, 2, 12, 12));
+        form.setOpaque(false);
+        form.setBorder(BorderFactory.createEmptyBorder(10, 40, 10, 40));
 
-        panel.add(new JLabel("Type:"));
-        typeBox = new JComboBox<>(new String[]{"single", "twin", "triple", "four-sharing"});
-        panel.add(typeBox);
+        form.add(new JLabel("Room Number:"));
+        roomNumField = new JTextField(); styleField(roomNumField); form.add(roomNumField);
 
-        panel.add(new JLabel("Capacity:"));     capacityField = new JTextField();    panel.add(capacityField);
+        form.add(new JLabel("Block:"));
+        blockBox = new JComboBox<>(); styleCombo(blockBox); form.add(blockBox);
 
-        JButton addBtn = new JButton("Add Room"); panel.add(addBtn);  panel.add(new JLabel());
+        form.add(new JLabel("Type:"));
+        typeBox = new JComboBox<>(new String[]{"single", "twin", "triple", "four-sharing"}); styleCombo(typeBox); form.add(typeBox);
 
-        // Load blocks from DB
+        form.add(new JLabel("Capacity:"));
+        capacityField = new JTextField(); styleField(capacityField); form.add(capacityField);
+
+        addBtn = new JButton("Add Room");
+        addBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        addBtn.setForeground(Color.WHITE);
+        addBtn.setBackground(new Color(33, 150, 243));
+        addBtn.setFocusPainted(false);
+        addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addBtn.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
+        addBtn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { addBtn.setBackground(new Color(25,105,190)); }
+            public void mouseExited(MouseEvent e) { addBtn.setBackground(new Color(33,150,243)); }
+        });
+
+        form.add(addBtn);
+        form.add(new JLabel());
+
+        content.add(form, BorderLayout.CENTER);
+
         loadBlocksFromDB();
 
         addBtn.addActionListener(e -> {
@@ -44,8 +83,18 @@ public class AddRoomGUI extends JFrame {
             }
         });
 
-        add(panel);
         setVisible(true);
+    }
+
+    private void styleField(JTextField field) {
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBackground(new Color(255, 255, 255, 240));
+        field.setBorder(BorderFactory.createLineBorder(new Color(188, 222, 255), 1, true));
+    }
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(new Color(255,255,255,240));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(188, 222, 255), 1, true));
     }
 
     private void loadBlocksFromDB() {
@@ -106,8 +155,7 @@ public class AddRoomGUI extends JFrame {
             stmt.setInt(2, getSelectedBlockId());
             stmt.setString(3, (String) typeBox.getSelectedItem());
             stmt.setInt(4, Integer.parseInt(capacityField.getText().trim()));
-            int rowsInserted = stmt.executeUpdate();
-            if (rowsInserted > 0) {
+            if (stmt.executeUpdate() > 0) {
                 JOptionPane.showMessageDialog(this, "Room added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 dispose();
             } else {
