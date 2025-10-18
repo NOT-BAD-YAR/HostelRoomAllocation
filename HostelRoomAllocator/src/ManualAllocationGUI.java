@@ -8,43 +8,83 @@ public class ManualAllocationGUI extends JFrame {
     private JComboBox<String> studentBox, roomBox;
     private Map<String, Integer> studentMap = new HashMap<>();
     private Map<String, Integer> roomMap = new HashMap<>();
+    private JButton allocBtn;
 
     public ManualAllocationGUI() {
-        setTitle("Manual Room Allocation");
-        setSize(400, 220);
+        setTitle("🔗 Manual Room Allocation");
+        setSize(420, 260);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(3,2,14,20));
-        panel.setBorder(BorderFactory.createEmptyBorder(18, 30, 18, 30));
+        // Gradient background
+        JPanel content = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(245,255,250),
+                        0, getHeight(), new Color(198,232,222)
+                );
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        content.setLayout(new BorderLayout());
+        add(content);
 
-        panel.add(new JLabel("Select Student:")); studentBox = new JComboBox<>(); panel.add(studentBox);
-        panel.add(new JLabel("Select Room:"));   roomBox = new JComboBox<>(); panel.add(roomBox);
+        JLabel title = new JLabel("Manual Room Allocation", JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setBorder(BorderFactory.createEmptyBorder(12,0,14,0));
+        content.add(title, BorderLayout.NORTH);
 
-        JButton allocBtn = new JButton("Allocate Room"); panel.add(allocBtn); panel.add(new JLabel());
+        JPanel form = new JPanel(new GridLayout(3,2,14,16));
+        form.setOpaque(false);
+        form.setBorder(BorderFactory.createEmptyBorder(14,32,8,32));
 
-        // Load students and rooms from DB
+        form.add(new JLabel("Select Student:")); studentBox = new JComboBox<>(); styleCombo(studentBox); form.add(studentBox);
+        form.add(new JLabel("Select Room:")); roomBox = new JComboBox<>(); styleCombo(roomBox); form.add(roomBox);
+
+        allocBtn = new JButton("Allocate Room");
+        allocBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        allocBtn.setForeground(Color.WHITE);
+        allocBtn.setBackground(new Color(102, 181, 210));
+        allocBtn.setFocusPainted(false);
+        allocBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        allocBtn.setBorder(BorderFactory.createEmptyBorder(7, 18, 7, 18));
+        allocBtn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { allocBtn.setBackground(new Color(46,128,195)); }
+            public void mouseExited(MouseEvent e) { allocBtn.setBackground(new Color(102,181,210)); }
+        });
+
+        form.add(allocBtn);
+        form.add(new JLabel());
+        content.add(form, BorderLayout.CENTER);
+
         loadStudentsFromDB();
         loadRoomsFromDB();
 
-        allocBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                int studentId = getSelectedStudentId();
-                int roomId = getSelectedRoomId();
-                if (studentId < 0 || roomId < 0) {
-                    JOptionPane.showMessageDialog(ManualAllocationGUI.this, "Select valid student and room.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                if (isRoomFull(roomId)) {
-                    JOptionPane.showMessageDialog(ManualAllocationGUI.this, "Room is already full.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                allocateRoom(studentId, roomId);
+        allocBtn.addActionListener(e -> {
+            int studentId = getSelectedStudentId();
+            int roomId = getSelectedRoomId();
+            if (studentId < 0 || roomId < 0) {
+                JOptionPane.showMessageDialog(this, "Select valid student and room.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            if (isRoomFull(roomId)) {
+                JOptionPane.showMessageDialog(this, "Room is already full.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            allocateRoom(studentId, roomId);
         });
 
-        add(panel);
         setVisible(true);
+    }
+
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(new Color(250,250,250,240));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(140, 200, 180), 1, true));
     }
 
     private void loadStudentsFromDB() {
