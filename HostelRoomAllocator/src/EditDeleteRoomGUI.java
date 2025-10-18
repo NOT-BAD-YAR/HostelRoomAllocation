@@ -12,40 +12,85 @@ public class EditDeleteRoomGUI extends JFrame {
     private int selectedRoomId = -1;
 
     public EditDeleteRoomGUI() {
-        setTitle("Edit/Delete Room");
-        setSize(420, 340);
+        setTitle("🚪 Edit/Delete Room");
+        setSize(470, 340);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(6,2,8,8));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        // Gradient background panel
+        JPanel content = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(233,242,255),
+                        0, getHeight(), new Color(249,253,255)
+                );
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        content.setLayout(new BorderLayout());
+        add(content);
 
-        panel.add(new JLabel("Select Room:")); roomBox = new JComboBox<>();    panel.add(roomBox);
-        panel.add(new JLabel("Room Number:")); roomNumField = new JTextField();panel.add(roomNumField);
-        panel.add(new JLabel("Block:"));       blockCombo = new JComboBox<>(); panel.add(blockCombo);
-        panel.add(new JLabel("Type:"));
-        typeBox = new JComboBox<>(new String[]{"single", "twin", "triple", "four-sharing"});
-        panel.add(typeBox);
-        panel.add(new JLabel("Capacity:"));    capacityField = new JTextField();panel.add(capacityField);
+        JLabel title = new JLabel("Edit or Delete Room", JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(14, 0, 18, 0));
+        content.add(title, BorderLayout.NORTH);
 
-        JButton editBtn = new JButton("Edit Room");    JButton delBtn = new JButton("Delete Room");
-        panel.add(editBtn); panel.add(delBtn);
+        JPanel form = new JPanel(new GridLayout(6,2,12,12));
+        form.setOpaque(false);
+        form.setBorder(BorderFactory.createEmptyBorder(10, 44, 10, 44));
+
+        form.add(new JLabel("Select Room:")); roomBox = new JComboBox<>(); styleCombo(roomBox); form.add(roomBox);
+        form.add(new JLabel("Room Number:")); roomNumField = new JTextField(); styleField(roomNumField); form.add(roomNumField);
+        form.add(new JLabel("Block:")); blockCombo = new JComboBox<>(); styleCombo(blockCombo); form.add(blockCombo);
+        form.add(new JLabel("Type:"));
+        typeBox = new JComboBox<>(new String[]{"single", "twin", "triple", "four-sharing"}); styleCombo(typeBox); form.add(typeBox);
+        form.add(new JLabel("Capacity:")); capacityField = new JTextField(); styleField(capacityField); form.add(capacityField);
+
+        JButton editBtn = new JButton("Edit Room");
+        styleActionBtn(editBtn, new Color(30,136,229), new Color(25,118,210));
+        JButton delBtn = new JButton("Delete Room");
+        styleActionBtn(delBtn, new Color(229,57,53), new Color(211,47,47));
+
+        form.add(editBtn); form.add(delBtn);
+
+        content.add(form, BorderLayout.CENTER);
 
         loadBlocksFromDB();
         loadRoomsFromDB();
 
         roomBox.addActionListener(e -> loadRoomDetails());
+        editBtn.addActionListener(e -> updateRoomInDB());
+        delBtn.addActionListener(e -> deleteRoomFromDB());
 
-        editBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { updateRoomInDB(); }
-        });
-
-        delBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { deleteRoomFromDB(); }
-        });
-
-        add(panel);
         setVisible(true);
+    }
+
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(new Color(255,255,255,235));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(100,181,246), 1, true));
+    }
+    private void styleField(JTextField field) {
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBackground(new Color(255,255,255,240));
+        field.setBorder(BorderFactory.createLineBorder(new Color(100,181,246), 1, true));
+    }
+
+    private void styleActionBtn(JButton btn, Color c1, Color c2) {
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(c1);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(7, 12, 7, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(c2); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(c1); }
+        });
     }
 
     private void loadRoomsFromDB() {
@@ -96,7 +141,7 @@ public class EditDeleteRoomGUI extends JFrame {
                 typeBox.setSelectedItem(rs.getString("type"));
                 capacityField.setText(String.valueOf(rs.getInt("capacity")));
             }
-        } catch (SQLException e) { /* ignore */ }
+        } catch (SQLException e) { }
     }
 
     private String getBlockNameById(int blockId) {
