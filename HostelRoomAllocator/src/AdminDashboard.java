@@ -21,61 +21,33 @@ public class AdminDashboard {
 
         while (true) {
             System.out.println("\n--- Main Menu ---");
-            System.out.println("1. Add Block");
+            System.out.println("1. Add Student");
             System.out.println("2. Add Room");
-            System.out.println("3. Add Student");
-            System.out.println("4. Manual Allocation");
-            System.out.println("5. Automatic Allocation");
-            System.out.println("6. View Allocations/Reports");
-            System.out.println("7. Edit Block");
-            System.out.println("8. Edit Room");
-            System.out.println("9. Edit Student");
-            System.out.println("10. Delete Block");
-            System.out.println("11. Delete Room");
-            System.out.println("12. Delete Student");
-            System.out.println("13. Exit");
+            System.out.println("3. Manual Allocation");
+            System.out.println("4. Automatic Allocation");
+            System.out.println("5. View Allocations/Reports");
+            System.out.println("6. Exit");
 
             System.out.print("Enter option: ");
             int choice = Integer.parseInt(scanner.nextLine());
 
             switch (choice) {
                 case 1:
-                    BlockEntry.main(new String[0]);
+                    StudentEntry.main(new String[0]);
                     break;
                 case 2:
                     RoomEntry.main(new String[0]);
                     break;
                 case 3:
-                    StudentEntry.main(new String[0]);
-                    break;
-                case 4:
                     ManualAllocation.main(new String[0]);
                     break;
-                case 5:
+                case 4:
                     AutoAllocation.main(new String[0]);
                     break;
-                case 6:
+                case 5:
                     ViewAllocations.main(new String[0]);
                     break;
-                case 7:
-                    EditBlock.main(new String[0]);
-                    break;
-                case 8:
-                    EditRoom.main(new String[0]);
-                    break;
-                case 9:
-                    EditStudent.main(new String[0]);
-                    break;
-                case 10:
-                    DeleteBlock.main(new String[0]);
-                    break;
-                case 11:
-                    DeleteRoom.main(new String[0]);
-                    break;
-                case 12:
-                    DeleteStudent.main(new String[0]);
-                    break;
-                case 13:
+                case 6:
                     System.out.println("Exiting system. Goodbye!");
                     return;
                 default:
