@@ -1,5 +1,5 @@
 Room Number,Room Type,Block Name,Capacity,Occupants,Vacancy
 101,single,A-Block,1,1,0
-102,twin,A-Block,3,1,2
-107,four-sharing,B-Block,4,0,4
+102,twin,A-Block,3,3,0
+107,four-sharing,B-Block,4,1,3
 102,triple,B-Block,3,0,3

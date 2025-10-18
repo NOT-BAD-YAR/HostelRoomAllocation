@@ -1,14 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import com.itextpdf.text.*;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.pdf.*;
 import java.io.FileOutputStream;
+import java.io.File;
 import java.sql.*;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.*;
 
 public class ExportGUI extends JFrame {
     private JComboBox<String> reportTypeBox, formatBox;
@@ -17,45 +18,93 @@ public class ExportGUI extends JFrame {
     static class WatermarkPageEvent extends PdfPageEventHelper {
         private final Phrase watermark;
         public WatermarkPageEvent(String text) {
-            Font wmFont = new Font(Font.FontFamily.HELVETICA, 60, Font.BOLD, new BaseColor(200, 200, 255, 80));
+            // Use fully qualified com.itextpdf.text.Font
+            com.itextpdf.text.Font wmFont =
+                    new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 60, com.itextpdf.text.Font.BOLD, new BaseColor(200, 200, 255, 80));
             this.watermark = new Phrase(text, wmFont);
         }
         @Override
         public void onEndPage(PdfWriter writer, Document doc) {
             PdfContentByte cb = writer.getDirectContentUnder();
-            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER,
+            ColumnText.showTextAligned(cb, com.itextpdf.text.Element.ALIGN_CENTER,
                     watermark, (doc.right() + doc.left()) / 2, (doc.top() + doc.bottom()) / 2, 45);
         }
     }
 
     public ExportGUI() {
-        setTitle("Export Reports");
-        setSize(420, 180);
+        setTitle("🗂️ Export Reports");
+        setSize(440, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(3, 2, 12, 14));
-        panel.setBorder(BorderFactory.createEmptyBorder(22, 38, 22, 38));
+        // Gradient background
+        JPanel content = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0,0,new Color(255,251,233), 0,getHeight(),new Color(232,245,253));
+                g2.setPaint(gp);
+                g2.fillRect(0,0,getWidth(),getHeight());
+            }
+        };
+        content.setLayout(new BorderLayout());
+
+        JLabel title = new JLabel("Export Reports", JLabel.CENTER);
+        // Use fully qualified java.awt.Font
+        title.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(22,0,10,0));
+        content.add(title, BorderLayout.NORTH);
+
+        JPanel form = new JPanel(new GridLayout(3,2,12,16));
+        form.setOpaque(false);
+        form.setBorder(BorderFactory.createEmptyBorder(10,55,18,55));
 
         reportTypeBox = new JComboBox<>(new String[]{
                 "Student Allocations",
                 "Room Vacancies",
                 "Student List"
         });
-        formatBox = new JComboBox<>(new String[]{"PDF", "CSV"});
+        styleCombo(reportTypeBox);
 
-        panel.add(new JLabel("Report Type:")); panel.add(reportTypeBox);
-        panel.add(new JLabel("Export as:")); panel.add(formatBox);
+        formatBox = new JComboBox<>(new String[]{"PDF", "CSV"});
+        styleCombo(formatBox);
+
+        form.add(new JLabel("Report Type:"));
+        form.add(reportTypeBox);
+        form.add(new JLabel("Export as:"));
+        form.add(formatBox);
 
         JButton exportBtn = new JButton("Export");
-        panel.add(exportBtn); panel.add(new JLabel());
+        exportBtn.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 15));
+        exportBtn.setForeground(Color.WHITE);
+        exportBtn.setBackground(new Color(255,152,0));
+        exportBtn.setFocusPainted(false);
+        exportBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        exportBtn.setBorder(BorderFactory.createEmptyBorder(7, 22, 7, 22));
+        exportBtn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { exportBtn.setBackground(new Color(251,140,0)); }
+            public void mouseExited(MouseEvent e) { exportBtn.setBackground(new Color(255,152,0)); }
+        });
+
+        form.add(exportBtn);
+        form.add(new JLabel());
 
         exportBtn.addActionListener(e -> exportReport());
 
-        add(panel);
+        content.add(form, BorderLayout.CENTER);
+
+        add(content);
         setVisible(true);
     }
 
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 14));
+        combo.setBackground(new Color(255,255,255,235));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(251,192,45), 1, true));
+    }
+
+    // Report export logic
     private void exportReport() {
         String type = (String) reportTypeBox.getSelectedItem();
         String format = (String) formatBox.getSelectedItem();
@@ -80,36 +129,31 @@ public class ExportGUI extends JFrame {
         }
     }
 
-    // Colorful PDF exports with MARiO watermark
+    // PDF exports: use com.itextpdf.text.Font
     private void exportStudentAllocationsPDF(String fileName) throws Exception {
         Document doc = new Document();
         PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(fileName));
         writer.setPageEvent(new WatermarkPageEvent("MARiO"));
         doc.open();
-
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD, new BaseColor(0, 70, 200));
+        com.itextpdf.text.Font titleFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD, new BaseColor(0, 70, 200));
         Paragraph title = new Paragraph("Student Allocations Report\n\n", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
+        title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         doc.add(title);
-
-        PdfPTable table = new PdfPTable(5);
-        table.setWidthPercentage(100);
-
-        Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.WHITE);
+        PdfPTable table = new PdfPTable(5); table.setWidthPercentage(100);
+        com.itextpdf.text.Font headerFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
         BaseColor headerBg = new BaseColor(34, 90, 149);
         String[] headers = {"Student ID", "Name", "Room Number", "Room Type", "Block Name"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
             cell.setBackgroundColor(headerBg);
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
             table.addCell(cell);
         }
-
-        String sql = "SELECT s.student_id, s.name, r.room_number, r.type, b.block_name " +
-                "FROM students s LEFT JOIN rooms r ON s.room_id = r.room_id LEFT JOIN blocks b ON r.block_id = b.block_id";
+        String sql = "SELECT s.student_id, s.name, r.room_number, r.type, b.block_name FROM students s LEFT JOIN rooms r ON s.room_id = r.room_id LEFT JOIN blocks b ON r.block_id = b.block_id";
         try (Connection conn = DatabaseHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             boolean odd = true;
             while (rs.next()) {
                 BaseColor rowColor = odd ? new BaseColor(210, 230, 255) : BaseColor.WHITE;
@@ -129,30 +173,25 @@ public class ExportGUI extends JFrame {
         PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(fileName));
         writer.setPageEvent(new WatermarkPageEvent("MARiO"));
         doc.open();
-
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD, new BaseColor(200, 0, 0));
+        com.itextpdf.text.Font titleFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD, new BaseColor(200, 0, 0));
         Paragraph title = new Paragraph("Room Vacancy Report\n\n", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
+        title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         doc.add(title);
-
-        PdfPTable table = new PdfPTable(6);
-        table.setWidthPercentage(100);
-
-        Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.WHITE);
+        PdfPTable table = new PdfPTable(6); table.setWidthPercentage(100);
+        com.itextpdf.text.Font headerFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
         BaseColor headerBg = new BaseColor(128, 0, 0);
         String[] headers = {"Room Number", "Room Type", "Block Name", "Capacity", "Occupants", "Vacancy"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
             cell.setBackgroundColor(headerBg);
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
             table.addCell(cell);
         }
-
-        String sql = "SELECT r.room_number, r.type, b.block_name, r.capacity, r.occupants " +
-                "FROM rooms r JOIN blocks b ON r.block_id = b.block_id";
+        String sql = "SELECT r.room_number, r.type, b.block_name, r.capacity, r.occupants FROM rooms r JOIN blocks b ON r.block_id = b.block_id";
         try (Connection conn = DatabaseHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             boolean odd = true;
             while (rs.next()) {
                 int capacity = rs.getInt("capacity"), occ = rs.getInt("occupants");
@@ -174,29 +213,25 @@ public class ExportGUI extends JFrame {
         PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(fileName));
         writer.setPageEvent(new WatermarkPageEvent("MARiO"));
         doc.open();
-
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD, new BaseColor(0, 128, 0));
+        com.itextpdf.text.Font titleFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD, new BaseColor(0, 128, 0));
         Paragraph title = new Paragraph("Student List Report\n\n", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
+        title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         doc.add(title);
-
-        PdfPTable table = new PdfPTable(9);
-        table.setWidthPercentage(100);
-
-        Font headerFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE);
+        PdfPTable table = new PdfPTable(9); table.setWidthPercentage(100);
+        com.itextpdf.text.Font headerFont =
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
         BaseColor headerBg = new BaseColor(0, 128, 0);
         String[] headers = {"Student ID", "Name", "Roll Number", "Year", "Course", "Gender", "Mobile", "Parent", "Address"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
             cell.setBackgroundColor(headerBg);
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
             table.addCell(cell);
         }
-
         String sql = "SELECT student_id, name, roll_number, year, course, gender, mobile_number, parent_details, address FROM students";
         try (Connection conn = DatabaseHelper.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             boolean odd = true;
             while (rs.next()) {
                 BaseColor rowColor = odd ? new BaseColor(230, 255, 230) : BaseColor.WHITE;
@@ -215,17 +250,17 @@ public class ExportGUI extends JFrame {
         doc.add(table); doc.close();
     }
 
+    // Only use String for value here - PDF cell helper
     private void addColoredCell(PdfPTable table, String value, BaseColor bg) {
         PdfPCell cell = new PdfPCell(new Phrase(value));
         cell.setBackgroundColor(bg);
-        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         table.addCell(cell);
     }
 
-    // CSV exports (same as before)
+    // CSV Exports
     private void exportStudentAllocationsCSV(String fileName) throws Exception {
-        String sql = "SELECT s.student_id, s.name, r.room_number, r.type, b.block_name " +
-                "FROM students s LEFT JOIN rooms r ON s.room_id = r.room_id LEFT JOIN blocks b ON r.block_id = b.block_id";
+        String sql = "SELECT s.student_id, s.name, r.room_number, r.type, b.block_name FROM students s LEFT JOIN rooms r ON s.room_id = r.room_id LEFT JOIN blocks b ON r.block_id = b.block_id";
         try (Connection conn = DatabaseHelper.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery();
@@ -240,10 +275,8 @@ public class ExportGUI extends JFrame {
             }
         }
     }
-
     private void exportRoomVacanciesCSV(String fileName) throws Exception {
-        String sql = "SELECT r.room_number, r.type, b.block_name, r.capacity, r.occupants " +
-                "FROM rooms r JOIN blocks b ON r.block_id = b.block_id";
+        String sql = "SELECT r.room_number, r.type, b.block_name, r.capacity, r.occupants FROM rooms r JOIN blocks b ON r.block_id = b.block_id";
         try (Connection conn = DatabaseHelper.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery();
@@ -254,11 +287,12 @@ public class ExportGUI extends JFrame {
                 writer.write(rs.getString("room_number") + "," +
                         rs.getString("type") + "," +
                         rs.getString("block_name") + "," +
-                        capacity + "," + occ + "," + (capacity - occ) + "\n");
+                        capacity + "," +
+                        occ + "," +
+                        (capacity - occ) + "\n");
             }
         }
     }
-
     private void exportStudentListCSV(String fileName) throws Exception {
         String sql = "SELECT student_id, name, roll_number, year, course, gender, mobile_number, parent_details, address FROM students";
         try (Connection conn = DatabaseHelper.getConnection();

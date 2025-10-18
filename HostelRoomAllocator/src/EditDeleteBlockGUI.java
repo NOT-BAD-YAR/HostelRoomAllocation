@@ -11,33 +11,78 @@ public class EditDeleteBlockGUI extends JFrame {
     private int selectedBlockId = -1;
 
     public EditDeleteBlockGUI() {
-        setTitle("Edit/Delete Block");
-        setSize(380, 220);
+        setTitle("🏢 Edit/Delete Block");
+        setSize(430, 250);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(4,2,12,12));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        // Gradient background
+        JPanel content = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(
+                        0, 0, new Color(255,238,238),
+                        0, getHeight(), new Color(232,245,253)
+                );
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        content.setLayout(new BorderLayout());
+        add(content);
 
-        panel.add(new JLabel("Select Block:")); blockBox = new JComboBox<>();   panel.add(blockBox);
-        panel.add(new JLabel("Block Name:"));   blockNameField = new JTextField(); panel.add(blockNameField);
-        panel.add(new JLabel("Description:"));  descriptionField = new JTextField(); panel.add(descriptionField);
+        JLabel title = new JLabel("Edit or Delete Block", JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setBorder(BorderFactory.createEmptyBorder(12, 0, 12, 0));
+        content.add(title, BorderLayout.NORTH);
 
-        JButton editBtn = new JButton("Edit Block"); JButton delBtn = new JButton("Delete Block");
-        panel.add(editBtn); panel.add(delBtn);
+        JPanel form = new JPanel(new GridLayout(3,2,14,12));
+        form.setOpaque(false);
+        form.setBorder(BorderFactory.createEmptyBorder(10,44,20,44));
+
+        form.add(new JLabel("Select Block:")); blockBox = new JComboBox<>(); styleCombo(blockBox); form.add(blockBox);
+        form.add(new JLabel("Block Name:")); blockNameField = new JTextField(); styleField(blockNameField); form.add(blockNameField);
+        form.add(new JLabel("Description:")); descriptionField = new JTextField(); styleField(descriptionField); form.add(descriptionField);
+
+        JButton editBtn = new JButton("Edit Block");
+        styleActionBtn(editBtn, new Color(0,150,136), new Color(38,166,154));
+        JButton delBtn = new JButton("Delete Block");
+        styleActionBtn(delBtn, new Color(244,67,54), new Color(229,115,115));
+        form.add(editBtn); form.add(delBtn);
+
+        content.add(form, BorderLayout.CENTER);
 
         loadBlocksFromDB();
         blockBox.addActionListener(e -> loadBlockDetails());
+        editBtn.addActionListener(e -> updateBlockInDB());
+        delBtn.addActionListener(e -> deleteBlockFromDB());
 
-        editBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { updateBlockInDB(); }
-        });
-        delBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) { deleteBlockFromDB(); }
-        });
-
-        add(panel);
         setVisible(true);
+    }
+
+    private void styleField(JTextField field) {
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBackground(new Color(255,255,255,238));
+        field.setBorder(BorderFactory.createLineBorder(new Color(178,223,219), 1, true));
+    }
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setBackground(new Color(255,255,255,230));
+        combo.setBorder(BorderFactory.createLineBorder(new Color(178,223,219), 1, true));
+    }
+    private void styleActionBtn(JButton btn, Color c1, Color c2) {
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btn.setForeground(Color.WHITE);
+        btn.setBackground(c1);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(7, 12, 7, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(c2); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(c1); }
+        });
     }
 
     private void loadBlocksFromDB() {
@@ -70,7 +115,7 @@ public class EditDeleteBlockGUI extends JFrame {
                 blockNameField.setText(rs.getString("block_name"));
                 descriptionField.setText(rs.getString("description"));
             }
-        } catch (SQLException e) { /* ignore */ }
+        } catch (SQLException e) { }
     }
 
     private void updateBlockInDB() {
@@ -92,7 +137,6 @@ public class EditDeleteBlockGUI extends JFrame {
 
     private void deleteBlockFromDB() {
         if (selectedBlockId == -1) return;
-        // Check for rooms referencing this block first
         if (hasRoomsInBlock(selectedBlockId)) {
             JOptionPane.showMessageDialog(this, "Cannot delete block with rooms assigned!\nDelete/assign rooms first.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -112,7 +156,6 @@ public class EditDeleteBlockGUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Error deleting block (check foreign key).", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private boolean hasRoomsInBlock(int blockId) {
         String sql = "SELECT room_id FROM rooms WHERE block_id = ?";
         try (Connection conn = DatabaseHelper.getConnection();
@@ -120,8 +163,6 @@ public class EditDeleteBlockGUI extends JFrame {
             stmt.setInt(1, blockId);
             ResultSet rs = stmt.executeQuery();
             return rs.next();
-        } catch (SQLException e) {
-            return false;
-        }
+        } catch (SQLException e) { return false; }
     }
 }
